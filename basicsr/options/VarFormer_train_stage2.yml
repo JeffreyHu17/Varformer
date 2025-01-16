@@ -1,0 +1,183 @@
+# general settings
+name: VarFormer2
+model_type: VarFormerIdxModel4_2_losszd
+num_gpu: 4
+manual_seed: 114514 
+scale: 1
+crop_border: 0
+weights: [] # the sampling proportion of different datasets, [] means equal proportion
+
+
+datasets:
+  train:
+    name: rain_ll_blur_noise_haze
+    type: LQGTDataset3_weight
+    data_type: img
+    data_num: 5
+
+    dataroot_GT0: /home/wangsy/dataset/GoPro/train/groundtruth
+    dataroot_LQ0: /home/wangsy/dataset/GoPro/train/input
+
+    dataroot_GT1: /home/wangsy/dataset/llight/LOLdataset/our485/high
+    dataroot_LQ1: /home/wangsy/dataset/llight/LOLdataset/our485/low
+
+    dataroot_GT2: /home/wangsy/dataset/denoise/SIDD/train/target
+    dataroot_LQ2: /home/wangsy/dataset/denoise/SIDD/train/input
+
+    dataroot_GT3: /home/wangsy/dataset/derain/rain13k/train/target
+    dataroot_LQ3: /home/wangsy/dataset/derain/rain13k/train/input
+
+    dataroot_GT4: /home/wangsy/dataset/WED_BSD400/gt
+    dataroot_LQ4: /home/wangsy/dataset/WED_BSD400/g_noise
+
+    haze: true
+    dataroot_LQ_z: /home/wangsy/dataset/dehaze/RESIDE2/OTS_ALPHA2/haze/OTS
+    dataroot_GT_z: /home/wangsy/dataset/dehaze/RESIDE2/OTS_ALPHA2/clear/clear_images
+
+
+
+    need_GT: true
+    cond_scale: 4
+    use_shuffle: true
+    GT_size: 256 # #480 # 160 | 480 
+    use_flip: false
+    use_rot: false
+    # data loader
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 16
+    dataset_enlarge_ratio: 10
+    prefetch_mode: ~
+
+
+  val:
+    name: Test100
+    type: LQGTDataset  
+    dataroot_GT: /home/wangsy/dataset/derain/test/Test100/target
+    dataroot_LQ: /home/wangsy/dataset/derain/test/Test100/input
+    GT_size: 256
+    cond_scale: 4
+    save_img: false
+    need_GT: true
+    data_type: img
+
+    
+# network structures
+network_g:
+  type: VarFormer2 # VarFormer5 #VarFormer1
+  depth: 20 # 16 #24 ## keep the same with var_path
+  patch_nums: [1, 2, 3, 4, 5, 6, 8, 10, 13, 16]
+  attn_l2_norm: True
+  var_force_dpth: 7  
+  n_layers: 4
+  if_enhance: True
+  dec_adjust: True
+  var_cross_c: 3
+  ch_mult: [1, 1, 2, 2, 4]
+  num_res_blocks: 2
+  dropout: 0.0
+  div_part: 3
+
+  fix_modules: ['encoder','quant_conv','quantize','blocks','decoder','post_quant_conv']
+  vqgan_path: ./experiments/pretrained_models/vae_ch160v4096z32.pth # pretrained VQGAN 
+  var_path: ./experiments/pretrained_models/var_d20.pth # var_d16.pth # var_d24.pth # keep the same with depth
+network_vqgan: # this config is needed if no pre-calculated latent
+  type: VarVQAutoEncoder
+  model_path: ./experiments/pretrained_models/vae_ch160v4096z32.pth
+
+# path
+path:
+  pretrain_network_g: ~ # pth from stage 1 or train from scratch
+  param_key_g: params_ema
+  strict_load_g: false
+  pretrain_network_d: ~ #./experiments/pretrained_models/vqgan_discriminator.pth
+  strict_load_d: true
+  resume_state: ~
+
+# base_lr(4.5e-6)*bach_size(4)
+train:
+  use_hq_feat_loss: true
+  feat_loss_weight: 0.5
+  cross_entropy_loss: true
+  entropy_loss_weight: 0.1
+  fidelity_weight: 0
+  perceptual_loss_weight: 1.0
+  use_pixel_opt: true
+
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [400000, 450000]
+    gamma: 0.5
+
+  # scheduler:
+  #   type: CosineAnnealingRestartLR
+  #   periods: [500000]
+  #   restart_weights: [1]
+  #   eta_min: !!float 2e-5 # no lr reduce in official vqgan code
+
+  total_iter: 700000
+
+  warmup_iter: -1  # no warm up
+  ema_decay: 0.998
+
+  use_adaptive_weight: true
+
+  net_g_start_iter: 0
+  net_d_iters: 1
+  net_d_start_iter: 0
+  manual_seed: 620664
+
+  perceptual_opt:
+    type: PerceptualLoss
+    use_input_norm: true
+    range_norm: true
+    layer_weights: {'relu5_4': 1.}
+
+  # perceptual_opt:
+  #   type: LPIPSLoss
+  #   loss_weight: 1.0
+  #   use_input_norm: true
+  #   range_norm: true
+
+  psnr_opt:
+    type: PSNRLoss
+
+  # ssim_opt:
+  #   type: SSIMLoss
+
+
+# validation settings
+val:
+  val_freq: !!float 5e10 # no validation
+  save_img: true
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 4
+      test_y_channel: false
+    ssim: # metric name, can be arbitrary
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false  
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e4
+  use_tb_logger: true
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29412
+
+find_unused_parameters: true

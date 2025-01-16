@@ -12,11 +12,10 @@ from .var_sr_model import VarSRModel
 from losses import build_loss
 
 @MODEL_REGISTRY.register()
-class VarCodeFormerIdxModel(VarSRModel):
+class VarFormerIdxModel(VarSRModel):
     def feed_data(self, data):
         self.gt = data['gt'].to(self.device)
         self.input = data['in'].to(self.device)
-        self.size = data['size']
         self.b = self.gt.shape[0]
 
         if 'latent_gt' in data:
@@ -32,17 +31,15 @@ class VarCodeFormerIdxModel(VarSRModel):
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
-            print('build net_g_ema=======================================================')
+            
+            
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
             load_path = self.opt['path'].get('pretrain_network_g', None)
-            print('load_path===VarCodeFormerIdxModel====================================')
+            
             if load_path is not None:
                 key = self.load_network(self.net_g_ema, load_path, self.opt['path'].get('strict_load_g', True), 'params_ema')
-                print('VarCodeFormerIdxModel===============================================',key)
+                
             else:
                 self.model_ema(0)  # copy net_g weight
             self.net_g_ema.eval()
@@ -50,7 +47,7 @@ class VarCodeFormerIdxModel(VarSRModel):
         if self.opt['datasets']['train'].get('latent_gt_path', None) is not None:
             self.generate_idx_gt = False
         elif self.opt.get('network_vqgan', None) is not None:
-            print('build hq_vqgan_fix=======================================================')
+            
             self.hq_vqgan_fix = build_network(self.opt['network_vqgan']).to(self.device)
             self.hq_vqgan_fix.eval()
             self.generate_idx_gt = True
@@ -96,17 +93,15 @@ class VarCodeFormerIdxModel(VarSRModel):
         self.optimizer_g.zero_grad()
 
         if self.generate_idx_gt:
-            # print('self.gt============================',self.gt.shape)
+            
             gt_idx_Bl = self.hq_vqgan_fix.img_to_idxBl(self.gt)
-            # print('gt_idx_Bl=======================',gt_idx_Bl)
+            
             self.idx_gt = torch.cat(gt_idx_Bl, dim=1)
 
 
-            # print('self.gt========================',self.gt.shape,x.shape)  ##  rec_img, rec_img-logits, encoder-out-feature
+           
         if self.hq_feat_loss:
-            # quant_feats
-            # print('self.idx_gt===========================',self.idx_gt.shape) #torch.Size([4, 216])
-            # quant_feat_gt = self.net_g.module.quantize.get_codebook_feat(self.idx_gt, shape=[self.b,16,16,256]) # gt 通过encoder 获得 code index
+            
             first_h_BChw, quant_feat_gt, x_BLCv_wo_first_l = self.net_g.module.quantize.idxBl_to_var_input(gt_idx_Bl)
 
         if not self.cri_pix:
@@ -124,7 +119,7 @@ class VarCodeFormerIdxModel(VarSRModel):
             l1_loss = F.l1_loss(output, self.gt, reduction='mean')
             l_g_total += l1_loss
             loss_dict['l1_loss'] = l1_loss
-            # print('l1_loss===============================',l1_loss)
+            
 
         # hq_feat_loss
         if self.hq_feat_loss: # codebook loss 
@@ -179,18 +174,19 @@ class VarCodeFormerIdxModel(VarSRModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            # print('result==1======================',visuals['result'].shape,visuals['result'].max(),visuals['result'].min())
-            sr_img = F.interpolate(visuals['result'], size=self.size , mode='bilinear', align_corners=False)
-            # print('result===2=====================',sr_img.shape,sr_img.max(),sr_img.min())
+            
+            sr_img = visuals['result']
+            
+            
            
             sr_img = tensor2img(sr_img)
-            # sr_img = tensor2img([visuals['result']])
+            
             if 'gt' in visuals:
-                gt_img = F.interpolate(visuals['gt'], size=self.size , mode='bilinear', align_corners=False)
+                gt_img = visuals['gt']
                 gt_img = tensor2img(gt_img, min_max=(-1, 1))
                 del self.gt
 
-            # tentative for out of GPU memory
+            
             del self.input
             del self.output
             torch.cuda.empty_cache()
@@ -253,12 +249,11 @@ class VarCodeFormerIdxModel(VarSRModel):
 
 
 @MODEL_REGISTRY.register()
-class VarCodeFormerIdxModel3(VarSRModel):
+class VarFormerIdxModel3(VarSRModel):
     def feed_data(self, data):
         self.gt = data['gt'].to(self.device)
         self.gt2 = data['gt2'].to(self.device)
         self.input = data['in'].to(self.device)
-        self.size = data['size']
         self.b = self.gt.shape[0]
 
         if 'latent_gt' in data:
@@ -274,9 +269,7 @@ class VarCodeFormerIdxModel3(VarSRModel):
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
+            
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
             load_path = self.opt['path'].get('pretrain_network_g', None)
@@ -435,15 +428,15 @@ class VarCodeFormerIdxModel3(VarSRModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = F.interpolate(visuals['result'], size=self.size , mode='bilinear', align_corners=False)
+            sr_img = visuals['result']
            
             sr_img = tensor2img(sr_img)
             if 'gt' in visuals:
-                gt_img = F.interpolate(visuals['gt'], size=self.size , mode='bilinear', align_corners=False)
+                gt_img = visuals['gt']
                 gt_img = tensor2img(gt_img, min_max=(-1, 1))
                 del self.gt
 
-            # tentative for out of GPU memory
+            
             del self.input
             del self.output
             torch.cuda.empty_cache()
@@ -507,11 +500,10 @@ class VarCodeFormerIdxModel3(VarSRModel):
 
 
 @MODEL_REGISTRY.register()
-class VarCodeFormerIdxModel4_2(VarSRModel):
+class VarFormerIdxModel4_2(VarSRModel):
     def feed_data(self, data):
         self.gt = data['gt'].to(self.device)
         self.input = data['in'].to(self.device)
-        self.size = data['size']
         self.b = self.gt.shape[0]
 
         if 'latent_gt' in data:
@@ -527,9 +519,7 @@ class VarCodeFormerIdxModel4_2(VarSRModel):
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
+            
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
             load_path = self.opt['path'].get('pretrain_network_g', None)
@@ -699,16 +689,16 @@ class VarCodeFormerIdxModel4_2(VarSRModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = F.interpolate(visuals['result'], size=self.size , mode='bilinear', align_corners=False)
+            sr_img = visuals['result']
            
             sr_img = tensor2img(sr_img)
-            # sr_img = tensor2img([visuals['result']])
+            
             if 'gt' in visuals:
-                gt_img = F.interpolate(visuals['gt'], size=self.size , mode='bilinear', align_corners=False)
+                gt_img = visuals['gt']
                 gt_img = tensor2img(gt_img, min_max=(-1, 1))
                 del self.gt
 
-            # tentative for out of GPU memory
+            
             del self.input
             del self.output
             torch.cuda.empty_cache()
@@ -772,11 +762,10 @@ class VarCodeFormerIdxModel4_2(VarSRModel):
 
 from .var_sr_model import VarSRModel2
 @MODEL_REGISTRY.register()
-class VarCodeFormerIdxModel4_2_del(VarSRModel2): 
+class VarFormerIdxModel4_2_del(VarSRModel2): 
     def feed_data(self, data):
         self.gt = data['gt'].to(self.device)
         self.input = data['in'].to(self.device)
-        self.size = data['size']
         self.b = self.gt.shape[0]
 
         if 'latent_gt' in data:
@@ -792,9 +781,7 @@ class VarCodeFormerIdxModel4_2_del(VarSRModel2):
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
+            
 
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
@@ -965,15 +952,15 @@ class VarCodeFormerIdxModel4_2_del(VarSRModel2):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = F.interpolate(visuals['result'], size=self.size , mode='bilinear', align_corners=False)
+            sr_img = visuals['result']
            
             sr_img = tensor2img(sr_img)
             if 'gt' in visuals:
-                gt_img = F.interpolate(visuals['gt'], size=self.size , mode='bilinear', align_corners=False)
+                gt_img = visuals['gt']
                 gt_img = tensor2img(gt_img, min_max=(-1, 1))
                 del self.gt
 
-            # tentative for out of GPU memory
+            
             del self.input
             del self.output
             torch.cuda.empty_cache()
@@ -1036,17 +1023,13 @@ class VarCodeFormerIdxModel4_2_del(VarSRModel2):
 
 
 
-
 @MODEL_REGISTRY.register()
-class VarCodeFormerIdxModel4_2_losszd(VarSRModel): 
+class VarFormerIdxModel4_2_losszd(VarSRModel):
     def feed_data(self, data):
         self.gt = data['gt'].to(self.device)
         self.input = data['in'].to(self.device)
-        self.size = data['size']
-
         self.lq_path = data['lq_path']
         self.gt_path = data['gt_path']
-        # 'lq_path': LQ_path, 'gt_path': GT_path
         self.b = self.gt.shape[0]
 
         if 'latent_gt' in data:
@@ -1062,9 +1045,6 @@ class VarCodeFormerIdxModel4_2_losszd(VarSRModel):
         self.ema_decay = train_opt.get('ema_decay', 0)
         if self.ema_decay > 0:
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
             # load pretrained model
             load_path = self.opt['path'].get('pretrain_network_g', None)
@@ -1152,13 +1132,10 @@ class VarCodeFormerIdxModel4_2_losszd(VarSRModel):
 
 
         if self.hq_feat_loss:
+            _, quant_feat_gt, _ = self.net_g.module.quantize.idxBl_to_var_input(gt_idx_Bl)
 
-            first_h_BChw, quant_feat_gt, x_BLCv_wo_first_l = self.net_g.module.quantize.idxBl_to_var_input(gt_idx_Bl)
 
-        if not self.cri_pix:
-            logits, lq_feat = self.net_g(self.input,code_only=True) # codeformer-decoder-out  codeformer-encoder-out
-        else:
-            output, lq_feat, logits= self.net_g(self.input,code_only=True, pixel_l = True)
+        output, lq_feat, logits= self.net_g(self.input,code_only=True, pixel_l = True)
 
 
 
@@ -1242,15 +1219,15 @@ class VarCodeFormerIdxModel4_2_losszd(VarSRModel):
             self.test()
 
             visuals = self.get_current_visuals()
-            sr_img = F.interpolate(visuals['result'], size=self.size , mode='bilinear', align_corners=False)
+            sr_img= visuals['result']
            
             sr_img = tensor2img(sr_img)
             if 'gt' in visuals:
-                gt_img = F.interpolate(visuals['gt'], size=self.size , mode='bilinear', align_corners=False)
+                gt_img = visuals['gt']
                 gt_img = tensor2img(gt_img, min_max=(-1, 1))
                 del self.gt
 
-            # tentative for out of GPU memory
+            
             del self.input
             del self.output
             torch.cuda.empty_cache()

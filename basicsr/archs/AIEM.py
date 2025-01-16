@@ -12,8 +12,7 @@ class LayerNormFunction(torch.autograd.Function):
         N, C, H, W = x.size()
         mu = x.mean(1, keepdim=True)
         var = (x - mu).pow(2).mean(1, keepdim=True)
-        # print('mu, var', mu.mean(), var.mean())
-        # d.append([mu.mean(), var.mean()])
+
         y = (x - mu) / (var + eps).sqrt()
         weight, bias, y = weight.contiguous(), bias.contiguous(), y.contiguous()  # avoid cuda error
         ctx.save_for_backward(y, var, weight)
@@ -25,7 +24,6 @@ class LayerNormFunction(torch.autograd.Function):
         eps = ctx.eps
 
         N, C, H, W = grad_output.size()
-        # y, var, weight = ctx.saved_variables
         y, var, weight = ctx.saved_tensors
         g = grad_output * weight.view(1, C, 1, 1)
         mean_g = g.mean(dim=1, keepdim=True)

@@ -1,0 +1,48 @@
+name: test
+suffix: ~  # add suffix to saved images
+distortion: sr
+scale: 1
+crop_border: 0  # crop border when evaluation. If None(~), crop the scale pixels
+input_size: 256
+mean: [0.5, 0.5, 0.5]
+std: [0.5, 0.5, 0.5]
+
+
+# network structures
+network_g:
+  type: VarFormer2 # VarFormer5 #VarFormer1
+  depth: 20 #16 #24
+  patch_nums: [1, 2, 3, 4, 5, 6, 8, 10, 13, 16]
+  attn_l2_norm: True
+  var_force_dpth: 7
+  n_layers: 4
+  if_enhance: True
+  dec_adjust: True
+  var_cross_c: 3
+  ch_mult: [1, 1, 2, 2, 4]
+  num_res_blocks: 2
+  dropout: 0.0
+  div_part: 3
+
+  fix_modules: []
+  vqgan_path: ./experiments/pretrained_models/vae_ch160v4096z32.pth
+  var_path: ./experiments/pretrained_models/var_d20.pth  # keep the same with depth
+
+
+datasets:
+  test_0:
+    name: low
+    mode: LQGTDataset  
+    dataroot_GT: /home/wangsy/dataset/llight/LOLdataset/eval15/high
+    dataroot_LQ: /home/wangsy/dataset/llight/LOLdataset/eval15/low
+  test_1:
+    name: test100
+    mode: LQGTDataset 
+    dataroot_GT: /home/wangsy/dataset/derain/test/Test100/target
+    dataroot_LQ: /home/wangsy/dataset/derain/test/Test100/input
+
+#### path
+path:
+  root: ./experiments/
+  pretrain_model:   ~
+  strict_load: false
