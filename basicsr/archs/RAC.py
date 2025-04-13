@@ -408,28 +408,28 @@ class RACMoudle(nn.Module):
         self.swin_blocks = nn.Sequential(*[ResidualSwinTransformerBlock(dim*2,input_resolution,depth, num_heads, window_size) for _ in range(2)])
         self.softmax = nn.Softmax(dim=1)
     def forward(self, z, zq):
-        # Concatenate features along the channel dimension
-        concatenated = torch.cat((z, zq), dim=1)  # Shape: (1, 64, 16, 16)
+        
+        concatenated = torch.cat((z, zq), dim=1)  
 
-        # Reshape for MultiheadAttention
+        
         B, C, H, W = concatenated.shape
-        concatenated = concatenated.view(B, C, H * W)  # Shape: (1, 64, 256)
+        concatenated = concatenated.view(B, C, H * W)  
         concatenated = concatenated.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
+        
         for b in self.swin_blocks:
             concatenated = b(concatenated, x_size=(H,W))        
         output = concatenated
 
 
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
+        
+        output = output.view(B, C, H, W)  
 
-        # 1x1 convolution
+        
         output = self.conv1x1(output)
 
-        # Softmax activation
-        softmax_output = self.softmax(output.mean(dim=[2, 3]))  # Take the mean over spatial dimensions
+        
+        softmax_output = self.softmax(output.mean(dim=[2, 3]))  
 
         # Split the concatenated features to obtain two weight matrices
         w_z, w_zq = softmax_output.chunk(2,dim=1)
@@ -454,29 +454,29 @@ class RACMoudle3(nn.Module):
         self.swin_blocks = nn.Sequential(*[ResidualSwinTransformerBlock(dim*2,input_resolution,depth, num_heads, window_size) for _ in range(2)])
         self.softmax = nn.Softmax(dim=1)
     def forward(self, z, zq):
-        # Concatenate features along the channel dimension
-        concatenated = torch.cat((z, zq), dim=1)  # Shape: (1, 64, 16, 16)
+        
+        concatenated = torch.cat((z, zq), dim=1)  
 
-        # Reshape for MultiheadAttention
+        
         B, C, H, W = concatenated.shape
-        concatenated = concatenated.view(B, C, H * W)  # Shape: (1, 64, 256)
+        concatenated = concatenated.view(B, C, H * W)  
         concatenated = concatenated.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
+        
         for b in self.swin_blocks:
             concatenated = b(concatenated, x_size=(H,W))        
         output = concatenated
 
 
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
+        
+        output = output.view(B, C, H, W)  
 
-        # 1x1 convolution
+        
         output = self.conv1x1(output)
 
 
-        # Softmax activation
-        softmax_output = self.softmax(output)  # Take the mean over spatial dimensions
+        
+        softmax_output = self.softmax(output)  
         # Split the concatenated features to obtain two weight matrices
         w_z, w_zq = softmax_output.chunk(2,dim=1)
 
@@ -500,26 +500,26 @@ class WPMoudle3(nn.Module):
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, q_x, v_x):
-        # Concatenate features along the channel dimension
+        
 
-        # Reshape for MultiheadAttention
+        
         B, C, H, W = q_x.shape
-        q_x = q_x.view(B, C, H * W)  # Shape: (1, 64, 256)
+        q_x = q_x.view(B, C, H * W)  
         q_x = q_x.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
+        
         for b in self.swin_blocks:
             q_x = b(q_x, x_size=(H,W))        
         output = q_x
 
 
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
+        
+        output = output.view(B, C, H, W)  
 
-        # 1x1 convolution
+        
         output = self.conv1x1(output)
         output = self.global_pool(output).squeeze(-1).squeeze(-1).unsqueeze(1)
-        # Softmax activation
+        
 
 
 
@@ -597,27 +597,27 @@ class WPMoudle4(nn.Module):
         # self.softmax = nn.Softmax(dim=1)
 
     def forward(self, q_x, v_x):
-        # Concatenate features along the channel dimension
+        
 
-        # Reshape for MultiheadAttention
+        
         B, C, H, W = q_x.shape
-        q_x = q_x.view(B, C, H * W)  # Shape: (1, 64, 256)
+        q_x = q_x.view(B, C, H * W)  
         q_x = q_x.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
+        
         for b in self.swin_blocks:
             q_x = b(q_x, x_size=(H,W))        
         output = q_x
 
 
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
+        
+        output = output.view(B, C, H, W)  
 
-        # 1x1 convolution
+        
         output = self.conv1x1(output)
         output = self.global_pool(output).squeeze(-1).squeeze(-1)
-        # Softmax activation
-        # softmax_output = self.softmax(output.mean(dim=[2, 3]))  # Take the mean over spatial dimensions
+        
+        # softmax_output = self.softmax(output.mean(dim=[2, 3]))  
 
         final_output = torch.einsum('nr,nrchw->nrchw', output, v_x)
         B,R,C,H,W = final_output.shape
@@ -655,24 +655,24 @@ class WPMoudle4_norm(nn.Module):
 
 
     def forward(self, q_x, v_x):  # enc_feat_dict_var  prompt_hat 
-        # Concatenate features along the channel dimension
-        # concatenated = torch.cat((z, zq), dim=1)  # Shape: (1, 64, 16, 16)
+        
+         
 
-        # Reshape for MultiheadAttention
+        
         B, C, H, W = q_x.shape
-        q_x = q_x.view(B, C, H * W)  # Shape: (1, 64, 256)
+        q_x = q_x.view(B, C, H * W)  
         q_x = q_x.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
+        
         for b in self.swin_blocks:
             q_x = b(q_x, x_size=(H,W))        
         output = q_x
 
 
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
+        
+        output = output.view(B, C, H, W)  
 
-        # 1x1 convolution
+        
         output = self.conv1x1(output)
         output = self.global_pool(output).squeeze(-1).squeeze(-1)
         output = F.softmax(output, dim=1)
@@ -697,40 +697,52 @@ class RACMoudle2(nn.Module):
         self.swin_blocks = nn.Sequential(*[ResidualSwinTransformerBlock(dim*2,input_resolution,depth, num_heads, window_size) for _ in range(2)])
         self.softmax = nn.Softmax(dim=1)
     def forward(self, z, zq):
-        # Concatenate features along the channel dimension
-        concatenated = torch.cat((z, zq), dim=1)  # Shape: (1, 64, 16, 16)
-
-        # Reshape for MultiheadAttention
+        
+        concatenated = torch.cat((z, zq), dim=1)  
         B, C, H, W = concatenated.shape
-        concatenated = concatenated.view(B, C, H * W)  # Shape: (1, 64, 256)
+        concatenated = concatenated.view(B, C, H * W)  
         concatenated = concatenated.permute(0, 2, 1)
-        # Pass through Residual Swin Transformer Blocks
         for b in self.swin_blocks:
             concatenated = b(concatenated, x_size=(H,W))        
         output = concatenated
 
-
         output = output.permute(0, 2, 1)
-        # Reshape back to original shape
-        output = output.view(B, C, H, W)  # Shape: (1, 64, 16, 16)
-
-        # 1x1 convolution
+        output = output.view(B, C, H, W)  
         output = self.conv1x1(output)
-
-
-        # Softmax activation
-        softmax_output = self.softmax(output)  # Take the mean over spatial dimensions
-        # Split the concatenated features to obtain two weight matrices
+        softmax_output = self.softmax(output)  
         w_z, w_zq = softmax_output.chunk(2,dim=1)
-
-
-        # Matrix multiplication with original features
         weighted_z = torch.einsum('nhw,nchw->nchw', w_z.squeeze(1), z)
         weighted_zq = torch.einsum('nhw,nchw->nchw', w_zq.squeeze(1), zq)
-
-
-        # Element-wise addition
         final_output = weighted_z + weighted_zq
 
         return final_output
 
+class RcaMoudle4(nn.Module):
+    def __init__(self, dim, input_resolution, depth, num_heads, window_size):
+        super(RcaMoudle4, self).__init__()
+        self.conv1x1 = nn.Conv2d(dim*2, 2, kernel_size=1)
+        self.swin_blocks = nn.Sequential(*[ResidualSwinTransformerBlock(dim*2,input_resolution,depth, num_heads, window_size) for _ in range(2)])
+        self.softmax = nn.Softmax(dim=1)
+    def forward(self, z, zq):
+
+        concatenated = torch.cat((z, zq), dim=1) 
+        B, C, H, W = concatenated.shape
+        concatenated = concatenated.view(B, C, H * W)  
+        concatenated = concatenated.permute(0, 2, 1)
+        for b in self.swin_blocks:
+            concatenated = b(concatenated, x_size=(H,W))        
+        output = concatenated
+        
+        output = output.permute(0, 2, 1)
+        output = output.view(B, C, H, W) 
+        output = self.conv1x1(output)
+        w_z_f, _ = output.chunk(2,dim=1)
+
+
+        softmax_output = self.softmax(output)  
+        w_z, w_zq = softmax_output.chunk(2,dim=1)
+        weighted_z = torch.einsum('nhw,nchw->nchw', w_z.squeeze(1), z)
+        weighted_zq = torch.einsum('nhw,nchw->nchw', w_zq.squeeze(1), zq)
+        final_output = weighted_z + weighted_zq
+
+        return final_output, w_z_f
