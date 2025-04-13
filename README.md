@@ -52,17 +52,6 @@ python basicsr/varformer_test.py -opt basicsr/options/test.yml
 ```
 
 
-## Citation
-
-```
-@article{wang2024varformer,
-  title={Navigating Image Restoration with VAR’s Distribution Alignment Prior},
-  author={Wang, Siyang and Zhao, Feng},
-  journal={arXiv preprint arXiv:2412.21063},
-  year={2024}
-}
-```
-
 ## Acknowledgements
 
 This code is built upon [VAR](https://github.com/FoundationVision/VAR) and [CodeFormer](https://github.com/sczhou/CodeFormer), thanks for their excellent work!
