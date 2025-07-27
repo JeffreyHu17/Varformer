@@ -11,22 +11,21 @@ std: [0.5, 0.5, 0.5]
 # network structures
 network_g:
   type: VarFormer2 # VarFormer5 #VarFormer1
-  depth: 20 #16 #24
+  depth: 16 #24 #20 
   patch_nums: [1, 2, 3, 4, 5, 6, 8, 10, 13, 16]
   attn_l2_norm: True
   var_force_dpth: 7
   n_layers: 4
   if_enhance: True
-  dec_adjust: True
+  dec_adjust: False
   var_cross_c: 3
   ch_mult: [1, 1, 2, 2, 4]
   num_res_blocks: 2
-  dropout: 0.0
-  div_part: 3
+
 
   fix_modules: []
   vqgan_path: ./experiments/pretrained_models/vae_ch160v4096z32.pth
-  var_path: ./experiments/pretrained_models/var_d20.pth  # keep the same with depth
+  var_path: ./experiments/pretrained_models/var_d16.pth  # keep the same with depth
 
 
 datasets:
@@ -40,9 +39,29 @@ datasets:
     mode: LQGTDataset 
     dataroot_GT: /home/wangsy/dataset/derain/test/Test100/target
     dataroot_LQ: /home/wangsy/dataset/derain/test/Test100/input
-
+  test_2:
+    name: haze
+    mode: LQGTDataset3 
+    dataroot_GT: /home/wangsy/dataset/dehaze/SOTS/outdoor/gt
+    dataroot_LQ: /home/wangsy/dataset/dehaze/SOTS/outdoor/hazy
+  test_3:
+    name: urban100_0_50
+    mode: LQGTDataset 
+    dataroot_GT: /home/wangsy/dataset/denoise/urban100_0_50/target
+    dataroot_LQ: /home/wangsy/dataset/denoise/urban100_0_50/input
+  test_4:
+    name: GoPro
+    mode: LQGTDataset 
+    dataroot_GT: /home/wangsy/dataset/deblur/GoPro/test/groundtruth
+    dataroot_LQ: /home/wangsy/dataset/deblur/GoPro/test/input
+  test_5:
+    name: SIDD
+    mode: LQGTDataset 
+    dataroot_GT: /home/wangsy/dataset/denoise/SIDD/val/target
+    dataroot_LQ: /home/wangsy/dataset/denoise/SIDD/val/target
+    
 #### path
 path:
   root: ./experiments/
-  pretrain_model:   ~
+  pretrain_model:   ./experiments/pretrained_models/net_g_last.pth
   strict_load: false
