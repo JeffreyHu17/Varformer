@@ -189,7 +189,7 @@ class VarFormer2_varRec(VarVQAutoEncoder_varRec):
 
         return  x_idx_Bl    
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
 
@@ -464,7 +464,7 @@ class VarFormer2(VarVQAutoEncoder):
 
         return  x_idx_Bl    
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
         fuse_list = [self.fuse_generator_block[f_size] for f_size in self.connect_list]
@@ -726,7 +726,7 @@ class VarCodeFormer3(VarVQAutoEncoder2):
         return x.clamp_(-1, 1)
     
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5) -> torch.Tensor:  # returns logits_BLV
 
         x_idx_Bl = self.img_to_idxBl(inp_B3HW)
         
@@ -975,7 +975,7 @@ class VarCodeFormer4(VarVQAutoEncoder2):
         return x.clamp_(-1, 1)
     
 
-    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=1.5) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=0.5) -> torch.Tensor:  # returns logits_BLV
 
         x_idx_Bl = self.img_to_idxBl(inp_B3HW)
         prompt_idx = self.img_to_idxBl(prompt_img)
@@ -1219,7 +1219,7 @@ class VarCodeFormer5(VarVQAutoEncoder2):
         return x.clamp_(-1, 1)
     
 
-    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=1.5) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=0.5) -> torch.Tensor:  # returns logits_BLV
 
         x_encoder_out = self.img_to_encoder_out(inp_B3HW)
         x_idx_Bl = self.encoder_out_to_idxBl(x_encoder_out)
@@ -1465,7 +1465,7 @@ class VarCodeFormer6(VarVQAutoEncoder2):
         return x.clamp_(-1, 1)
     
 
-    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=1.5) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=0.5) -> torch.Tensor:  # returns logits_BLV
 
         x_encoder_out = self.img_to_encoder_out(inp_B3HW)
         x_idx_Bl = self.encoder_out_to_idxBl(x_encoder_out)
@@ -1711,7 +1711,7 @@ class VarCodeFormer7(VarVQAutoEncoder2):
         return x.clamp_(-1, 1)
     
 
-    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=1.5) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, prompt_img , code_only=False, pixel_l = False, cfg=0.5) -> torch.Tensor:  # returns logits_BLV
 
         x_encoder_out = self.img_to_encoder_out(inp_B3HW)
         x_idx_Bl = self.encoder_out_to_idxBl(x_encoder_out)
@@ -1996,7 +1996,7 @@ class VarCodeFormer10(VarVQAutoEncoder2):
         x = self.main_decoder(dec_res_feats, f_hat, enc_feat_dict, fuse_list)
         return x.clamp_(-1, 1)
     
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
@@ -2304,7 +2304,7 @@ class VarCodeFormer11(VarVQAutoEncoder2):
         x = self.main_decoder(dec_res_feats, f_hat, enc_feat_dict, fuse_list)
         return x.clamp_(-1, 1)
     
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
@@ -2566,7 +2566,7 @@ class VarFormer15(VarVQAutoEncoder2__norm_noDecoder_2encoder2_varformer2):
         self.head = nn.Linear(self.C, self.V)
 
         # class-free r
-        cfg=1.5
+        cfg=0.5
         r_ls = []
         
         
@@ -2642,7 +2642,7 @@ class VarFormer15(VarVQAutoEncoder2__norm_noDecoder_2encoder2_varformer2):
 
         return  x_idx_Bl    
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
@@ -2979,7 +2979,7 @@ class VarFormer16(VarVQAutoEncoder2__norm_noDecoder_2encoder2_varformer2_kzj):
 
         return  x_idx_Bl    
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
@@ -3304,7 +3304,7 @@ class VarFormer19(VarVQAutoEncoder2__norm_noDecoder_2encoder2_varformer2_kzj_pat
 
         return  x_idx_Bl    
 
-    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=1.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
+    def forward(self, inp_B3HW, code_only=False, pixel_l = False, cfg=0.5, gt_in = False) -> torch.Tensor:  # returns logits_BLV
 
 
         out_list = [self.fuse_encoder_block[f_size] for f_size in self.connect_list]
