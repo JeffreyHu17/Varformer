@@ -43,7 +43,7 @@ python -m torch.distributed.launch --nproc_per_node=gpu_num --master_port=4344 b
 
 ## 🔥Inference
 
-Modify the configuration file `options/test.yml` accordingly.
+Modify the configuration file `options/test.yml` accordingly. Download  [VarFormer_16](https://huggingface.co/wsy541/VarFormer/resolve/main/net_g_last.pth) into `experiments/pretrained_models/`
 
 ```
 
